@@ -65,15 +65,24 @@ app.post("/transcribe", upload.single("video"), async (req, res) => {
 
     console.log("🎥 受信:", req.file.originalname, req.file.mimetype, req.file.size, "bytes");
 
-    // Whisper へ送信（SRT）
-    const srtText = await client.audio.transcriptions.create({
-      file: fs.createReadStream(req.file.path),
-      model: "whisper-1",
-      response_format: "srt"
-    });
+// Whisper へ送信（SRT）
+const raw = await client.audio.transcriptions.create({
+  file: fs.createReadStream(req.file.path),
+  model: "whisper-1",
+  response_format: "srt"
+});
 
-    console.log("✅ 変換完了 (SRT)");
-    res.json({ srt: srtText });
+// 返却の揺れを吸収：文字列 or {text:"..."} の両方に対応
+const srt = typeof raw === "string" ? raw : (raw?.text ?? "");
+if (!srt) throw new Error("SRTが空でした（変換結果なし）");
+
+console.log("✅ 変換完了 (SRT)");
+// フロントは content-type を見て JSON/テキストを自動判定する実装なので、どちらでもOK
+// テキストで返す:
+res.type("text/plain; charset=utf-8").send(srt);
+// JSONで返したい場合は代わりに:
+// res.json({ srt });
+
   } catch (err) {
     console.error("❌ 変換エラー:", err);
     res.status(500).json({ error: String(err?.message || err) });
@@ -86,3 +95,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 サーバー起動: http://localhost:${PORT}`);
 });
+

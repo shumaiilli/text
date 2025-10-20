@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>自動字幕ジェネレーター</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🎬 自動字幕ジェネレーター</h1>
+      <p class="lead">動画をアップロードして文字起こし（SRT）を生成します。</p>
+
+      <div class="grid">
+        <div>
+          <!-- プレビューエリア -->
+          <div id="previewArea">
+            <video id="player" controls playsinline></video>
+            <div style="margin-top:8px" class="meta">
+              動画長さ: <span id="duration">-</span>　
+              ファイルサイズ: <span id="filesize">-</span>
+            </div>
+          </div>
+
+          <!-- ファイル選択 -->
+          <div style="margin-top:12px">
+            <label class="block">
+              <span class="small">動画ファイルを選択</span>
+              <input id="fileInput" name="video" type="file" accept="video/*">
+            </label>
+
+            <div class="controls">
+              <button id="submitBtn" disabled>字幕を生成</button>
+              <button id="downloadBtn" style="display:none" class="ghost">SRTをダウンロード</button>
+              <div style="flex:1" class="small">送信先: <span id="endpoint">/transcribe</span></div>
+            </div>
+          </div>
+
+          <h3 style="margin-top:16px">ログ</h3>
+          <pre id="log" class="log">準備完了</pre>
+        </div>
+
+        <!-- 右側カード -->
+        <aside class="rightCard">
+          <div class="card" style="padding:12px">
+            <div class="small">進捗</div>
+            <progress id="progress" value="0" max="100" style="display:none"></progress>
+            <div id="status" class="meta">未送信</div>
+          </div>
+
+          <div class="card" style="padding:12px">
+            <div class="small">SRT プレビュー</div>
+            <div id="srtPreview" class="srtPreview">
+              ここにSRTが表示されます
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

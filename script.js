@@ -35,8 +35,7 @@ submitBtn.addEventListener("click", async () => {
   if (!file) return alert("ファイルを選択してください");
 
   const formData = new FormData();
-  formData.append("video", file);
-
+  formData.append("file", file);   
   log.textContent = "アップロード中...";
   progress.style.display = "block";
   statusEl.textContent = "送信中...";

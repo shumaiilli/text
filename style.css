@@ -117,3 +117,31 @@ button[disabled] {
   border: 1px dashed #ffdca8;
   font-size: 13px;
 }
+.player-wrap {
+  position: relative;
+  max-width: 960px;
+  margin: 16px 0;
+}
+.player-wrap video {
+  width: 100%;
+  display: block;
+}
+#subOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 6% 4% 10%;
+  text-align: center;
+}
+#subText {
+  color: #fff;
+  text-shadow: -2px -2px 0 #000, 2px -2px 0 #000,
+               -2px  2px 0 #000, 2px  2px 0 #000;
+  font-size: clamp(16px, 3.3vw, 36px);
+  line-height: 1.2;
+  white-space: pre-line;
+}
+

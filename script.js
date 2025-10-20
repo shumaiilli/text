@@ -81,3 +81,43 @@ submitBtn.addEventListener("click", async () => {
     progress.style.display = "none";
   }
 });
+
+// === 字幕プレビュー機能追加 ===
+const subOverlay = document.getElementById("subOverlay");
+const subText = document.getElementById("subText");
+let cues = [];
+let lastIndex = -1;
+
+function parseSRT(srt) {
+  const blocks = srt.replace(/\r/g,'').trim().split(/\n\s*\n/);
+  return blocks.map(b => {
+    const lines = b.split('\n');
+    if (/^\d+$/.test(lines[0])) lines.shift();
+    const m = lines[0].match(/(\d{2}):(\d{2}):(\d{2}),(\d{3}) --> (\d{2}):(\d{2}):(\d{2}),(\d{3})/);
+    const toSec = (h,m,s,ms)=>(((+h*60)+(+m))*60+(+s))+ms/1000;
+    const start = toSec(m[1],m[2],m[3],m[4]);
+    const end   = toSec(m[5],m[6],m[7],m[8]);
+    const text  = lines.slice(1).join('\n');
+    return { start, end, text };
+  }).filter(Boolean);
+}
+
+// 動画時間と同期して表示
+player.addEventListener("timeupdate", () => {
+  const t = player.currentTime;
+  let i = lastIndex;
+  if (i < 0 || i >= cues.length || t < cues[i].start || t > cues[i].end) {
+    i = cues.findIndex(c => t >= c.start && t <= c.end);
+  }
+  if (i !== lastIndex) {
+    lastIndex = i;
+    subText.textContent = i >= 0 ? cues[i].text : "";
+  }
+});
+
+// SRTを受け取った時に呼ぶ関数
+function onSrtReady(srtText) {
+  cues = parseSRT(srtText);
+  lastIndex = -1;
+}
+

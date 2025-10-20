@@ -14,9 +14,24 @@
 
       <div class="grid">
         <div>
-          <!-- プレビューエリア -->
+          <!-- プレビューエリア（動画＋字幕オーバーレイ） -->
           <div id="previewArea">
-            <video id="player" controls playsinline></video>
+            <div class="player-wrap">
+              <video id="player" controls playsinline></video>
+
+              <!-- 字幕オーバーレイ -->
+              <div id="subOverlay" aria-live="polite">
+                <span id="subText"></span>
+              </div>
+            </div>
+
+            <!-- オーバーレイ用ツールバー -->
+            <div class="subs-toolbar" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+              <label><input id="toggleOverlay" type="checkbox" checked> 字幕プレビューを重ねて表示</label>
+              <button id="fontUp"   type="button">A+</button>
+              <button id="fontDown" type="button">A-</button>
+            </div>
+
             <div style="margin-top:8px" class="meta">
               動画長さ: <span id="duration">-</span>　
               ファイルサイズ: <span id="filesize">-</span>
@@ -27,7 +42,8 @@
           <div style="margin-top:12px">
             <label class="block">
               <span class="small">動画ファイルを選択</span>
-              <input id="fileInput" name="video" type="file" accept="video/*">
+              <!-- accept は video/* のままでOK。FormData では script.js で nameを"file"としてappendします -->
+              <input id="fileInput" type="file" accept="video/*">
             </label>
 
             <div class="controls">

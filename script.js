@@ -1,66 +1,84 @@
-// server.js －－ CommonJS版
-const express = require("express");
-const multer = require("multer");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
-const OpenAI = require("openai");
-const { toFile } = require("openai");
+const fileInput = document.getElementById("fileInput");
+const player = document.getElementById("player");
+const submitBtn = document.getElementById("submitBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const log = document.getElementById("log");
+const progress = document.getElementById("progress");
+const statusEl = document.getElementById("status");
+const srtPreview = document.getElementById("srtPreview");
+const duration = document.getElementById("duration");
+const filesize = document.getElementById("filesize");
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+const API_BASE = "https://text-nspj.onrender.com"; // 必要に応じて変更
 
-const __dirname = path.resolve(".");
-const PORT = process.env.PORT || 3000;
+// ファイル選択時の処理
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, path.join(__dirname, "tmp")),
-    filename: (_req, file, cb) => cb(null, `${Date.now()}_${file.originalname}`)
-  }),
-  limits: { fileSize: 512 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("video/") || file.mimetype.startsWith("audio/")) {
-      return cb(null, true);
-    }
-    cb(new Error("動画/音声ファイルのみアップロードできます"));
-  }
+  const url = URL.createObjectURL(file);
+  player.src = url;
+
+  filesize.textContent = (file.size / 1024 / 1024).toFixed(2) + " MB";
+
+  player.onloadedmetadata = () => {
+    duration.textContent = (player.duration / 60).toFixed(1) + " 分";
+  };
+
+  submitBtn.disabled = false;
+  log.textContent = "ファイル読み込み完了";
 });
-try { fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true }); } catch {}
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// 字幕生成ボタン
+submitBtn.addEventListener("click", async () => {
+  const file = fileInput.files[0];
+  if (!file) return alert("ファイルを選択してください");
 
-app.get("/health", (_req, res) => res.json({ ok: true }));
+  const formData = new FormData();
+  formData.append("video", file);
 
-app.post("/transcribe", upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "file is required" });
-  const tempPath = req.file.path;
+  log.textContent = "アップロード中...";
+  progress.style.display = "block";
+  statusEl.textContent = "送信中...";
 
   try {
-    const fileForUpload = await toFile(
-      fs.createReadStream(tempPath),
-      req.file.originalname || "audio.mp4"
-    );
-    const raw = await client.audio.transcriptions.create({
-      file: fileForUpload,
-      model: "whisper-1",
-      response_format: "srt"
+    const res = await fetch(`${API_BASE}/transcribe`, {
+      method: "POST",
+      body: formData
     });
-    const srt = typeof raw === "string" ? raw : (raw?.text ?? "");
-    if (!srt) throw new Error("SRTが空でした（変換結果なし）");
 
-    res.type("text/plain; charset=utf-8").send(srt);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message || "transcribe failed" });
+    const isJson = res.headers.get("content-type")?.includes("application/json");
+
+    if (!res.ok) {
+      let msg = `サーバーエラー ${res.status}`;
+      if (isJson) {
+        const j = await res.json().catch(() => null);
+        if (j?.error) msg += `\n詳細: ${j.error}`;
+      }
+      throw new Error(msg);
+    }
+
+    const data = isJson ? await res.json() : { srt: await res.text() };
+    if (!data?.srt) throw new Error("SRTの取得に失敗しました");
+
+    srtPreview.textContent = data.srt;
+    log.textContent = "変換完了 ✅";
+    statusEl.textContent = "完了";
+    downloadBtn.style.display = "inline-block";
+
+    // SRT ダウンロード
+    downloadBtn.onclick = () => {
+      const blob = new Blob([data.srt], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "transcript.srt";
+      a.click();
+    };
+  } catch (err) {
+    console.error(err);
+    log.textContent = "エラー: " + (err?.message || err);
+    statusEl.textContent = "失敗 ❌";
   } finally {
-    try { fs.unlinkSync(tempPath); } catch {}
+    progress.style.display = "none";
   }
-});
-
-// app.use(express.static(__dirname));
-
-app.listen(PORT, () => {
-  console.log(`🚀 server on : http://localhost:${PORT}`);
 });

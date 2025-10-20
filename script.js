@@ -9,7 +9,7 @@ const srtPreview = document.getElementById("srtPreview");
 const duration = document.getElementById("duration");
 const filesize = document.getElementById("filesize");
 
-const API_BASE = "https://text-1-w100.onrender.com"; // 必要に応じて変更
+const API_BASE = "https://text-nspj.onrender.com";  
 
 // ファイル選択時の処理
 fileInput.addEventListener("change", (e) => {
